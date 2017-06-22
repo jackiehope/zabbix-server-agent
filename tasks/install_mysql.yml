@@ -1,0 +1,57 @@
+---
+- name: 安装mysql-server
+  yum: name=MySQL-server state=present
+  when: install_mysql == 1
+
+- name: 安装mariadb-server
+  yum: name=mariadb-server state=present
+  when: install_mariadb == 1
+
+- name: 安装mysql模块
+  yum: name=MySQL-python state=present
+
+- name: 启动mysql服务
+  service: name=mariadb state=started enabled=yes
+
+- name: 保存用户名和密码到本地 / set my.cnf for root
+  template: src="my.cnf.j2" dest=/root/.my.cnf owner=root mode=600
+
+- name: 移除所有匿名用户 / Removes all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+
+- name: 设置MySQL root用户的密码 / set the MySQL root account credentials
+  action: mysql_user name=root host={{ item }} password={{ mysql_root_pwd }}
+  with_items:
+    - "{{ ansible_fqdn }}"
+    - ::1
+    - 127.0.0.1
+    - localhost
+  when: ansible_hostname != 'localhost'
+
+
+
+- name: 创建zabbix数据库 / create zabbix database
+  mysql_db:
+    name: zabbix
+    state: present
+    collation: utf8_bin
+    encoding: utf8
+
+- name: 为了获取初始化sql，安装zabbix-server-mysql
+  yum: name=zabbix-server-mysql state=present
+
+- name: 创建zabbix用户 / create zabbix mysql user
+  mysql_user:
+    host: '%'
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_pwd }}"
+    name: "{{ zabbix_mysql_user }}"
+    password: "{{ zabbix_mysql_pwd }}"
+    priv: "zabbix.*:ALL"
+  tags: ['db']
+
+- name: 导入zabbix的sql
+  shell: zcat /usr/share/doc/zabbix-server-mysql-{{ major_version }}.*/create.sql.gz | mysql -u{{ zabbix_mysql_user }} -p{{ zabbix_mysql_pwd }} zabbix

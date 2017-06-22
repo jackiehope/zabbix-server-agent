@@ -1,0 +1,26 @@
+---
+- name: 安装 zabbix-server-mysql zabbix-web-mysql
+  yum: name={{ item }} state=present
+  with_items:
+    - zabbix-server-mysql
+    - zabbix-web-mysql
+
+- name: 修改zabbix server的db配置
+  lineinfile:
+    dest: /etc/zabbix/zabbix_server.conf
+    regexp: '^{{ item.key }}=.*'
+    line: '{{ item.key }}={{ item.value }}'
+  with_items:
+  - { key: 'DBHost', value: '{{ zabbix_DBHost }}' }
+  - { key: 'DBName', value: '{{ zabbix_DBName }}' }
+  - { key: 'DBUser', value: '{{ zabbix_mysql_user }}' }
+  - { key: 'DBPassword', value: '{{ zabbix_mysql_pwd }}' }
+
+- name: 启动zabbix-sever且自启
+  service: name=zabbix-server state=started enabled=yes
+
+- name: php配置timezone
+  template: dest=/etc/httpd/conf.d/zabbix.conf src=zabbix.conf.j2 mode=0644
+
+- name: 启动apache
+  service: name=httpd state=started enabled=yes

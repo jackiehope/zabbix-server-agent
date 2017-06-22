@@ -1,0 +1,25 @@
+---
+# defaults file for jackie.zabbix-server-agent
+# server目前支持centos7，agent支持centos和fedora20+, zabbix版本>3.0
+
+major_version: '3.2'
+release_version: '3.2.6'
+
+timezone: Asia/Shanghai
+
+#安装的数据库
+install_mariadb: 1
+install_mysql: 0
+
+# db配置信息
+zabbix_DBHost: localhost
+zabbix_DBName: zabbix
+
+# 数据库用户
+mysql_root_user: root
+mysql_root_pwd: root_password
+zabbix_mysql_user: zabbix
+zabbix_mysql_pwd: zabbix_password
+
+# zabbix server 配置
+CacheSize: 128M

@@ -1,0 +1,20 @@
+---
+# tasks file for jackie.zabbix-server-agent
+- name: 如果是fedora就安装el7的源
+  set_fact: ansible_distribution_major_version=7
+  when: ansible_distribution_major_version|int > 20
+
+- name: 安装zabbix的仓库源
+  package: name=http://repo.zabbix.com/zabbix/{{ major_version }}/rhel/{{ ansible_distribution_major_version }}/x86_64/zabbix-release-{{ major_version }}-1.el{{ ansible_distribution_major_version }}.noarch.rpm state=present
+
+- name: 安装zabbix server
+  include: install_server.yml
+  when: '"zabbix_server" in zabbix_components'
+
+- name: 安装zabbix agent
+  include: install_agent.yml
+  when: '"zabbix_agent" in zabbix_components'
+
+- name: 安装数据库MySQL-server
+  include: install_mysql.yml
+  when: '"zabbix_mysql" in zabbix_components'
